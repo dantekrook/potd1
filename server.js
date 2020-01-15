@@ -37,11 +37,7 @@ app.use(express.static(__dirname + "/public"));
 app.use(parser.urlencoded({ extended: false }));
 app.use(parser.json());
 
-<<<<<<< HEAD
 app.use(function (req, res, next) {
-=======
-app.use(function(req, res, next) {
->>>>>>> e6f434abd3d9fa6896f283e8029adbecc76e19f4
   res.locals.userValue = null;
   next();
 });
@@ -49,56 +45,35 @@ app.use(function(req, res, next) {
 app.set("view engine", "ejs");
 app.set("views", path.join(__dirname, "views"));
 
-<<<<<<< HEAD
 app.post("/login", function (req, res) {
   console.log(req.session.admin + " admin")
-=======
-app.post("/login", function(req, res) {
->>>>>>> e6f434abd3d9fa6896f283e8029adbecc76e19f4
   if (!req.session.admin) {
     var email = req.body.email;
     email = email.toLowerCase();
     var password = req.body.password;
     var sql = `SELECT id, COUNT(*) AS logged FROM users WHERE password="${password}" AND email="${email}" AND active="${1}"`;
-<<<<<<< HEAD
     db.get(sql, function (err, row) {
-=======
-    db.get(sql, function(err, row) {
->>>>>>> e6f434abd3d9fa6896f283e8029adbecc76e19f4
       if (err) {
         res.status(400).json({ error: err.message });
         return;
       }
       if (row.logged) {
-<<<<<<< HEAD
         console.log("Användaren är aktiv och hittades i databasen")
-=======
->>>>>>> e6f434abd3d9fa6896f283e8029adbecc76e19f4
         sess = req.session;
         sess.email = email;
         sess.userid = row.id;
         sql = `SELECT id, COUNT(*) AS logged FROM users WHERE password="${password}" AND email="${email}" AND active="${1}" and admin="${1}"`;
-<<<<<<< HEAD
         db.get(sql, function (err, row) {
-=======
-        db.get(sql, function(err, row) {
->>>>>>> e6f434abd3d9fa6896f283e8029adbecc76e19f4
           if (err) {
             res.status(400).json({ error: err.message });
             return;
           }
           if (row.logged) {
-<<<<<<< HEAD
             console.log("Användaren är admin")
             sess.admin = 1;
             res.render("admin", { url: url });
           } else {
             console.log("Vanlig användare")
-=======
-            sess.admin = 1;
-            res.render("admin", { url: url });
-          } else {
->>>>>>> e6f434abd3d9fa6896f283e8029adbecc76e19f4
             let today = new Date();
             today.setDate(today.getDate());
             today = today
@@ -107,16 +82,11 @@ app.post("/login", function(req, res) {
               .replace(/-/g, "");
             var sql = `SELECT id, COUNT(*) AS uploaded from picture WHERE datum = "${today}" AND userid= "${sess.userid}"`;
             var params = [];
-<<<<<<< HEAD
             db.get(sql, function (err, row) {
-=======
-            db.get(sql, function(err, row) {
->>>>>>> e6f434abd3d9fa6896f283e8029adbecc76e19f4
               if (err) {
                 res.status(400).json({ error: err.message });
                 return;
               }
-<<<<<<< HEAD
               console.log("Visa uploadsidan")
               console.log("userid " + sess.userid);
               console.log("row " + row.uploaded);
@@ -130,22 +100,10 @@ app.post("/login", function(req, res) {
                 res.render("upload", { url: url });
               }*/
               res.render("upload", { url: url });
-=======
-              console.log(sess.userid);
-              console.log(row.uploaded);
-              if (row.uploaded) {
-                console.log("Uploaded already!");
-                res.render("showpic", { url: url });
-              } else {
-                console.log("Not uploaded!");
-                res.render("upload", { url: url });
-              }
->>>>>>> e6f434abd3d9fa6896f283e8029adbecc76e19f4
             });
           }
         });
       }
-<<<<<<< HEAD
     });
   } else {
     console.log(sess)
@@ -322,97 +280,6 @@ app.post("/sparabild", function (req, res) {
   );
 })
 
-=======
-    });
-  } else {
-    res.render("upload", { url: url });
-  }
-});
-
-app.post("/signup", function(req, res) {
-  var email = req.body.email;
-  email = email.toLowerCase();
-  var password = req.body.password;
-  var sql = `SELECT COUNT(*) AS antal FROM users WHERE email="${email}"`;
-  db.get(sql, function(err, row) {
-    if (err) {
-      res.status(400).json({ error: err.message });
-      return;
-    }
-    var userid = 0;
-    if (row.antal) {
-      console.log("Användare finns redan");
-    } else {
-      console.log("Lägger till användare");
-      db.run(
-        `INSERT INTO users(email, password, active) VALUES("${email}", "${password}", "${0}")`,
-        function(err) {
-          if (err) {
-            return console.log(err.message);
-          }
-          console.log(`A row has been inserted with rowid ${this.lastID}`);
-          userid = this.lastID;
-        }
-      );
-    }
-    res.json({ id: userid });
-  });
-});
-
-function getFileName(file) {
-  var arr = file.split(".");
-  return "." + arr[1];
-}
-
-app.post("/upload", function(req, res) {
-  sess = req.session;
-  if (sess.email) {
-    if (!req.files || Object.keys(req.files).length === 0) {
-      return res.status(400).send("No files were uploaded.");
-    }
-    let currentTime = new Date();
-    currentTime = currentTime
-      .toISOString()
-      .slice(0, 10)
-      .replace(/-/g, "");
-    let sampleFile = req.files.sampleFile;
-
-    let uploadPath = __dirname + "/public/upload/" + sampleFile.name;
-    sampleFile.mv(uploadPath, function(err) {
-      if (err) {
-        return res.status(500).send(err);
-      }
-      var lastID;
-      db.run(
-        `INSERT INTO picture(url, datum, active, userid) VALUES("${sampleFile.name}", "${currentTime}", 0, ${sess.userid})`,
-        function(err) {
-          if (err) {
-            return console.log(err.message);
-          }
-          lastID = this.lastID;
-          var idfile = lastID + getFileName(sampleFile.name);
-          db.run(
-            `UPDATE picture SET url = "${idfile}" WHERE id = "${lastID}"`,
-            function(err) {
-              fs.rename(
-                uploadPath,
-                __dirname + "/public/upload/" + idfile,
-                function(err) {
-                  if (err) console.log("ERROR: " + err);
-                }
-              );
-            }
-          );
-        }
-      );
-      res.redirect("/");
-    });
-  } else {
-    res.render("login", { url: url });
-  }
-});
-
->>>>>>> e6f434abd3d9fa6896f283e8029adbecc76e19f4
 app.get("/picture", (req, res, next) => {
   let yesterday = new Date();
   yesterday.setDate(yesterday.getDate() - 1);
@@ -444,7 +311,6 @@ app.get("/logout", (req, res, next) => {
   });
 });
 
-<<<<<<< HEAD
 app.get("/page/:page", function (req, res) {
   res.render(req.params.page, { url: url });
 });
@@ -453,14 +319,6 @@ app.get("/", function (req, res) {
   console.log("Ladda localhost")
   sess = req.session;
   console.log(sess.email)
-=======
-app.get("/page/:page", function(req, res) {
-  res.render(req.params.page, { url: url });
-});
-
-app.get("/", function(req, res) {
-  sess = req.session;
->>>>>>> e6f434abd3d9fa6896f283e8029adbecc76e19f4
   if (sess.email) {
     if (sess.admin) {
       res.render("admin", { url: url });
@@ -472,12 +330,6 @@ app.get("/", function(req, res) {
   }
 });
 
-<<<<<<< HEAD
 app.listen(8000, function () {
   console.log("server running on port 8000");
 });
-=======
-app.listen(8000, function() {
-  console.log("server running on port 8000");
-});
->>>>>>> e6f434abd3d9fa6896f283e8029adbecc76e19f4
