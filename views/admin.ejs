@@ -1,67 +1,65 @@
 <html>
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <meta http-equiv="X-UA-Compatible" content="ie=edge" />
+        <script src="https://ajax.googleapis.com/ajax/libs/jquery/2.1.3/jquery.min.js"></script>
+        <link rel="stylesheet" type="text/css" href="<%= url %>/style.css" />
+        <title></title>
+    </head>
 
-<head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <meta http-equiv="X-UA-Compatible" content="ie=edge" />
-    <script src="https://ajax.googleapis.com/ajax/libs/jquery/2.1.3/jquery.min.js"></script>
-    <link rel="stylesheet" type="text/css" href="<%= url %>/style.css" />
-    <title></title>
-</head>
+    <body>
+        <div class="center">
+            <h1>ADMIN SIDA</h1>
+            <div id="pictures"></div>
+            <a class="logout" href="/logout">Logout</a>
+        </div>
+        <script>
+            if (performance.navigation.type == 2) {
+                location.reload(true);
+            }
 
-<body>
-    <div class="center">
-        <h1>Hello admin!</h1>
-        <div id="pictures"></div>
-        <a class="logout" href="/logout">Logout</a>
-    </div>
-    <script>
-        if (performance.navigation.type == 2) {
-            location.reload(true);
-        }
+            function turnActive(e) {
+                $.ajax({
+                    url: "http://localhost:8000/activate",
+                    data: { url: e },
+                    async: false,
+                    dataType: "json",
+                    type: "POST",
+                    success: function(data) {
+                        console.log(e + " is activated!");
+                    }
+                });
+            }
 
-        function turnActive(e) {
             $.ajax({
-                url: "http://localhost:8000/activate",
-                data: { url: e },
+                url: "http://localhost:8000/picture",
                 async: false,
                 dataType: "json",
-                type: "POST",
-                success: function (data) {
-                    console.log(e + " is activated!");
+                success: function(data) {
+                    var stringReturn = "";
+                    for (var i = 0; i < data.data.length; i++) {
+                        console.log(data.data[i].datum);
+                        stringReturn += `<div class="imgbox"><img src="http://localhost:8000/upload/${data.data[i].url}"><input type="radio" name="active" id="${data.data[i].url}" onChange="turnActive(this.id)"></div>`;
+                    }
+                    document.getElementById(
+                        "pictures"
+                    ).innerHTML = stringReturn;
                 }
             });
-        }
 
-        $.ajax({
-            url: "http://localhost:8000/picture",
-            async: false,
-            dataType: "json",
-            success: function (data) {
-                var stringReturn = "";
-                for (var i = 0; i < data.data.length; i++) {
-                    console.log(data.data[i].datum);
-                    stringReturn += `<img src="http://localhost:8000/upload/${data.data[i].url}"><input type="radio" name="active" id="${data.data[i].url}" onChange="turnActive(this.id)">`;
+            $.ajax({
+                url: "http://localhost:8000/active",
+                async: false,
+                dataType: "json",
+                success: function(data) {
+                    if ((data.data.length = 1)) {
+                        document.getElementById(
+                            data.data[0].url
+                        ).checked = true;
+                    }
                 }
-                document.getElementById(
-                    "pictures"
-                ).innerHTML = stringReturn;
-            }
-        });
-
-        $.ajax({
-            url: "http://localhost:8000/active",
-            async: false,
-            dataType: "json",
-            success: function (data) {
-                if ((data.data.length = 1)) {
-                    document.getElementById(
-                        data.data[0].url
-                    ).checked = true;
-                }
-            }
-        });
-    </script>
-</body>
-
+            });
+        </script>
+    </body>
 </html>
