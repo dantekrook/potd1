@@ -12,7 +12,7 @@
         <div class="center">
             <h1>ADMIN SIDA</h1>
             <div id="pictures"></div>
-            <a class="logout" href="/logout">Logout</a>
+            <a class="logout" href="/logout">LOG OUT</a>
         </div>
         <script>
             if (performance.navigation.type == 2) {
@@ -40,7 +40,7 @@
                     var stringReturn = "";
                     for (var i = 0; i < data.data.length; i++) {
                         console.log(data.data[i].datum);
-                        stringReturn += `<div class="imgbox"><img src="http://localhost:8000/upload/${data.data[i].url}"><input type="radio" name="active" id="${data.data[i].url}" onChange="turnActive(this.id)"></div>`;
+                        stringReturn += `<div class="imgbox"><img src="http://localhost:8000/upload/${data.data[i].url}"><p></p><input type="radio" name="active" id="${data.data[i].url}" onChange="turnActive(this.id)"></div>`;
                     }
                     document.getElementById(
                         "pictures"
