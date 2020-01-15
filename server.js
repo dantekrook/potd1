@@ -45,6 +45,7 @@ app.use(function (req, res, next) {
 app.set("view engine", "ejs");
 app.set("views", path.join(__dirname, "views"));
 
+
 app.post("/login", function (req, res) {
   console.log(req.session.admin + " admin")
   if (!req.session.admin) {
@@ -162,6 +163,22 @@ app.post('/upload', upload.single('image'), (req, res, next) => {
   res.send(file)
 
 })
+
+app.get("/active", (req, res, next) => {
+  var sql = "select * from picture WHERE active = 1";
+  var params = [];
+  db.all(sql, params, (err, rows) => {
+    if (err) {
+      res.status(400).json({ error: err.message });
+      return;
+    }
+    res.json({
+      message: "success",
+      data: rows
+    });
+  });
+});
+
 
 /*app.post("/upload", function (req, res) {
   sess = req.session;
@@ -301,6 +318,14 @@ app.get("/picture", (req, res, next) => {
   });
 });
 
+app.post("/activate", (req, res, next) => {
+  console.log(req.body.url);
+  db.run(`UPDATE picture SET active = 0`, function (err) {
+    if (err) console.log("ERROR: " + err);
+  }).run(`UPDATE picture SET active = 1 WHERE url = "${req.body.url}"`);
+  res.send("File activated!");
+});
+
 app.get("/logout", (req, res, next) => {
   req.session.destroy(err => {
     if (err) {
@@ -316,6 +341,22 @@ app.get("/page/:page", function (req, res) {
 });
 
 app.get("/", function (req, res) {
+  // console.log("Ladda localhost")
+  // sess = req.session;
+  // console.log(sess.email)
+  // if (sess.email) {
+  //   if (sess.admin) {
+  //     res.render("admin", { url: url });
+  //   } else {
+  //     res.render("upload", { url: url });
+  //   }
+  // } else {
+  //   res.render("login", { url: url });
+  // }
+  res.render("picoftheday", { url: url });
+});
+
+app.get("/login", function (req, res) {
   console.log("Ladda localhost")
   sess = req.session;
   console.log(sess.email)

@@ -20,6 +20,19 @@
             location.reload(true);
         }
 
+        function turnActive(e) {
+            $.ajax({
+                url: "http://localhost:8000/activate",
+                data: { url: e },
+                async: false,
+                dataType: "json",
+                type: "POST",
+                success: function (data) {
+                    console.log(e + " is activated!");
+                }
+            });
+        }
+
         $.ajax({
             url: "http://localhost:8000/picture",
             async: false,
@@ -33,6 +46,19 @@
                 document.getElementById(
                     "pictures"
                 ).innerHTML = stringReturn;
+            }
+        });
+
+        $.ajax({
+            url: "http://localhost:8000/active",
+            async: false,
+            dataType: "json",
+            success: function (data) {
+                if ((data.data.length = 1)) {
+                    document.getElementById(
+                        data.data[0].url
+                    ).checked = true;
+                }
             }
         });
     </script>

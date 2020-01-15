@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <style>
+        img {
+            max-width: 500px;
+            max-height: 500px;
+        }
+    </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>pic of the day</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/axios/0.19.0/axios.js"></script>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.4.1/jquery.min.js"></script>
+</head>
+
+<body>
+    <div id="activepic"></div>
+    <script>
+        var picReturn = "";
+        $.ajax({
+            url: "http://localhost:8000/active",
+            async: false,
+            dataType: 'json',
+            success: function (data) {
+                console.log(data);
+                if (data.data.length = 1) {
+                    picReturn += `<img src="http://localhost:8000/upload/${data.data[0].url}">`
+
+                    document.getElementById("activepic").innerHTML = picReturn;
+                }
+            }
+        });
+    </script>
+</body>
+
+</html>
