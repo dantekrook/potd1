@@ -112,12 +112,13 @@ body {
 
 .logout {
     border: none;
-    border-radius: 10px;
+    border-radius: 0.5em;
     height: 40px;
     width: 50%;
     background-color: #f1f0ef;
     color: #4f4f4f;
     margin: 40px 25% 0 25%;
+    padding: 10px 20px;
 }
 
 .logout:hover {
@@ -131,4 +132,14 @@ body {
 img {
     max-width: 200px;
     max-height: 200px;
+}
+
+h1 {
+    color: #fff;
+}
+
+.imgbox {
+    background-color: #fff;
+    padding: 10px;
+    border-radius: 0.5em;
 }
