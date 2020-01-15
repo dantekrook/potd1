@@ -9,16 +9,36 @@
     <div class="login-page">
         <div class="form">
             <form class="register-form">
-                <input id="email2" type="text" name="email" placeholder="e-postadress" />
-                <input id="pass2" type="password" name="password" placeholder="lösenord" />
+                <input
+                    id="email2"
+                    type="text"
+                    name="email"
+                    placeholder="e-postadress"
+                />
+                <input
+                    id="pass2"
+                    type="password"
+                    name="password"
+                    placeholder="lösenord"
+                />
                 <button onclick="signup()">registrera</button>
                 <p class="message">
                     Redan registrerad? <a href="#">Logga in</a>
                 </p>
             </form>
-            <form class="login-form" method="POST" action="/login">
-                <input id="email" name="email" type="text" placeholder="e-postadress" />
-                <input id="pass" name="password" type="password" placeholder="lösenord" />
+            <form class="login-form" method="POST" action="/loginuser">
+                <input
+                    id="email"
+                    name="email"
+                    type="text"
+                    placeholder="e-postadress"
+                />
+                <input
+                    id="pass"
+                    name="password"
+                    type="password"
+                    placeholder="lösenord"
+                />
                 <button type="submit">logga in</button>
                 <p class="message">
                     Inte registrerad? <a href="#">Skapa konto</a>
@@ -27,31 +47,31 @@
         </div>
     </div>
     <script>
-        if (performance.navigation.type == 2) {
-            location.reload(true);
-        }
-        $(".message a").click(function () {
+        // if (performance.navigation.type == 2) {
+        //     location.reload(true);
+        // }
+        $(".message a").click(function() {
             $("form").animate({ height: "toggle", opacity: "toggle" }, "slow");
         });
-        function login() {
-            event.preventDefault();
-            var email = $("#email").val();
-            var password = $("#pass").val();
-            $.post(
-                "<%= url %>/login",
-                { email: email, password: password },
-                function (result) {
-                    // $("span").html(result);
-                    if (result.id == 0) {
-                        console.log("Login failed!");
-                    } else {
-                        console.log("Success");
-                        // SEND UPLOAD PAGE!!
-                        window.location.href = "<%= url %>/page/upload";
-                    }
-                }
-            );
-        }
+        // function login() {
+        //     event.preventDefault();
+        //     var email = $("#email").val();
+        //     var password = $("#pass").val();
+        //     $.post(
+        //         "<%= url %>/loginuser",
+        //         { email: email, password: password },
+        //         function(result) {
+        //             // $("span").html(result);
+        //             if (result.id == 0) {
+        //                 console.log("Login failed!");
+        //             } else {
+        //                 console.log("Success");
+        //                 // SEND UPLOAD PAGE!!
+        //                 window.location.href = "<%= url %>/page/upload";
+        //             }
+        //         }
+        //     );
+        // }
         function signup() {
             console.log("click");
             event.preventDefault();
@@ -60,7 +80,7 @@
             $.post(
                 "<%= url %>/signup",
                 { email: email, password: password },
-                function (result) {
+                function(result) {
                     console.log("great success");
                     if (result.id == 0) {
                         console.log("Login failed!");
