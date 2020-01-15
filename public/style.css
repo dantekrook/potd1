@@ -134,6 +134,10 @@ img {
     max-height: 200px;
 }
 
+#picoftheday {
+    max-width: 600px;
+    max-height: 600px;
+}
 h1 {
     color: #fff;
 }
