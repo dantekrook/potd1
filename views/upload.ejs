@@ -1,0 +1,117 @@
+<html>
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta http-equiv="X-UA-Compatible" content="ie=edge" />
+    <link href="https://unpkg.com/filepond/dist/filepond.css" rel="stylesheet" />
+    <link href="https://unpkg.com/filepond-plugin-image-preview/dist/filepond-plugin-image-preview.css"
+        rel="stylesheet" />
+    <script src="https://unpkg.com/filepond/dist/filepond.js"></script>
+    <script src="https://unpkg.com/filepond-plugin-image-preview/dist/filepond-plugin-image-preview.js"></script>
+    <script src="https://unpkg.com/filepond-plugin-image-crop/dist/filepond-plugin-image-crop.js"></script>
+    <script src="https://unpkg.com/filepond-plugin-image-transform/dist/filepond-plugin-image-transform.js"></script>
+    <script
+        src="https://unpkg.com/filepond-plugin-image-exif-orientation/dist/filepond-plugin-image-exif-orientation.js"></script>
+    <script
+        src="https://unpkg.com/filepond-plugin-file-validate-type/dist/filepond-plugin-file-validate-type.js"></script>
+    <script
+        src="https://unpkg.com/filepond-plugin-file-validate-size/dist/filepond-plugin-file-validate-size.js"></script>
+    <script src="https://unpkg.com/filepond-plugin-image-resize/dist/filepond-plugin-image-resize.js"></script>
+    <script src="https://unpkg.com/filepond-plugin-file-metadata/dist/filepond-plugin-file-metadata.js"></script>
+
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/2.1.3/jquery.min.js"></script>
+    <link rel="stylesheet" type="text/css" href="<%= url %>/style.css" />
+    <title></title>
+</head>
+
+<body>
+    <div class="center">
+        <form action="http://localhost:8000/sparabild" method="POST">
+            <input name="image" type="file" />
+            <input type="text" name="bildtext" />
+            <input type="submit" value="Skicka">
+        </form>
+        <a class="logout" href="/logout">Logout</a>
+    </div>
+    <script>
+        // function logout() {
+        //     console.log("Click");
+        //     $.get("<%= url %>/logout", function(result) {
+        //         if (result.success == false) {
+        //             console.log("Fail");
+        //         } else {
+        //             console.log("Success");
+        //         }
+        //     });
+        // }
+
+        if (performance.navigation.type == 2) {
+            location.reload(true);
+        }
+
+        const inputElement = document.querySelector('input[type="file"]');
+        FilePond.registerPlugin(
+            FilePondPluginImagePreview,
+            FilePondPluginImageCrop,
+            FilePondPluginImageTransform,
+            FilePondPluginFileValidateType,
+            FilePondPluginFileValidateSize,
+            FilePondPluginImageResize,
+            FilePondPluginFileMetadata
+        );
+        const pond = FilePond.create(inputElement);
+
+        FilePond.setOptions({
+            server: "<%= url %>/upload",
+            fileMetadataObject: {
+                id: sessionStorage.getItem("user_id")
+            },
+            allowImagePreview: true,
+            allowImageCrop: true,
+            imageCropAspectRatio: "1:1",
+            allowImageTransform: true,
+            allowImageExifOrientation: true,
+            instantUpload: false,
+            allowFileTypeValidation: true,
+            acceptedFileTypes: ["image/*"],
+            allowFileSizeValidation: true,
+            allowImageResize: true,
+            imageResizeTargetWidth: "1000px",
+            imageResizeTargetHeight: "1000px",
+            allowRevert: false,
+            // allowFileMetadata = true,
+            labelIdle:
+                'Dra-och-släpp din bild eller <span class="filepond--label-action">Bläddra</span>',
+            labelInvalidField: "Fältet innehåller ogiltiga filer",
+            labelFileWaitingForSize: "Väntar på storlek",
+            labelFileSizeNotAvailable: "Storlek inte tillgänglig",
+            labelFileCountSingular: "fil i lista",
+            labelFileCountPlural: "filer i lista",
+            labelFileLoading: "Laddar",
+            labelFileAdded: "Tillagd",
+            labelFileLoadError: "Fel under laddning",
+            labelFileRemoved: "Borttagen",
+            labelFileRemoveError: "Fel under borttagning",
+            labelFileProcessing: "Uppladdar",
+            labelFileProcessingComplete: "Uppladdad",
+            labelFileProcessingAborted: "Uppladdning avbruten",
+            labelFileProcessingError: "Fel under uppladdning",
+            labelFileProcessingRevertError: "Fel under återgång",
+
+            labelTapToCancel: "Avbryt",
+            labelTapToRetry: "Försök igen",
+            labelTapToUndo: "Ångra",
+
+            labelButtonRemoveItem: "Ta bort",
+            labelButtonAbortItemLoad: "Avbryt",
+            labelButtonRetryItemLoad: "Försök igen",
+            labelButtonAbortItemProcessing: "Avbryt",
+            labelButtonUndoItemProcessing: "Ångra",
+            labelButtonRetryItemProcessing: "Försök igen",
+            labelButtonProcessItem: "Ladda upp"
+        });
+    </script>
+</body>
+
+</html>

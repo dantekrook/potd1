@@ -1,0 +1,76 @@
+<head>
+    <meta charset="UTF-8" />
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/2.1.3/jquery.min.js"></script>
+    <link rel="stylesheet" type="text/css" href="<%= url %>/style.css" />
+    <title>Login</title>
+</head>
+
+<body>
+    <div class="login-page">
+        <div class="form">
+            <form class="register-form">
+                <input id="email2" type="text" name="email" placeholder="e-postadress" />
+                <input id="pass2" type="password" name="password" placeholder="lösenord" />
+                <button onclick="signup()">registrera</button>
+                <p class="message">
+                    Redan registrerad? <a href="#">Logga in</a>
+                </p>
+            </form>
+            <form class="login-form" method="POST" action="/login">
+                <input id="email" name="email" type="text" placeholder="e-postadress" />
+                <input id="pass" name="password" type="password" placeholder="lösenord" />
+                <button type="submit">logga in</button>
+                <p class="message">
+                    Inte registrerad? <a href="#">Skapa konto</a>
+                </p>
+            </form>
+        </div>
+    </div>
+    <script>
+        if (performance.navigation.type == 2) {
+            location.reload(true);
+        }
+        $(".message a").click(function () {
+            $("form").animate({ height: "toggle", opacity: "toggle" }, "slow");
+        });
+        function login() {
+            event.preventDefault();
+            var email = $("#email").val();
+            var password = $("#pass").val();
+            $.post(
+                "<%= url %>/login",
+                { email: email, password: password },
+                function (result) {
+                    // $("span").html(result);
+                    if (result.id == 0) {
+                        console.log("Login failed!");
+                    } else {
+                        console.log("Success");
+                        // SEND UPLOAD PAGE!!
+                        window.location.href = "<%= url %>/page/upload";
+                    }
+                }
+            );
+        }
+        function signup() {
+            console.log("click");
+            event.preventDefault();
+            var email = $("#email2").val();
+            var password = $("#pass2").val();
+            $.post(
+                "<%= url %>/signup",
+                { email: email, password: password },
+                function (result) {
+                    console.log("great success");
+                    if (result.id == 0) {
+                        console.log("Login failed!");
+                    } else {
+                        console.log("Success");
+                        // SEND UPLOAD PAGE!!
+                        window.location.href = "<%= url %>/page/upload";
+                    }
+                }
+            );
+        }
+    </script>
+</body>
