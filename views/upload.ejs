@@ -29,25 +29,17 @@
     <body>
         <div class="center">
             <h1>UPPLADDNING</h1>
-            <form action="http://localhost:8000/sparabild" method="POST">
+            <form
+                action="http://localhost:8000/sparabild"
+                class="imgform"
+                method="POST"
+            >
                 <input name="image" type="file" />
-                <input type="text" name="bildtext" />
-                <input type="submit" value="Skicka" />
+                <input type="submit" value="SKICKA" class="send" />
             </form>
             <a class="logout" href="/logout">LOGGGA UT</a>
         </div>
         <script>
-            // function logout() {
-            //     console.log("Click");
-            //     $.get("<%= url %>/logout", function(result) {
-            //         if (result.success == false) {
-            //             console.log("Fail");
-            //         } else {
-            //             console.log("Success");
-            //         }
-            //     });
-            // }
-
             if (performance.navigation.type == 2) {
                 location.reload(true);
             }

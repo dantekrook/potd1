@@ -6,8 +6,12 @@
 </head>
 
 <body>
-    <script>
-    </script>
-    <h1>This is your pic of the day</h1>
-    <img src="<%= picurl %>">
+    <div class="center">
+        <h1>DIN DAGENS BILD</h1>
+        <div class="imgbox2">
+            <img src="<%= picurl %>" />
+            <a class="delete" href="/delete">TA BORT</a>
+        </div>
+        <a class="logout" href="/logout">LOGGA UT</a>
+    </div>
 </body>

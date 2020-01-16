@@ -162,10 +162,66 @@ h3 {
     height: auto;
 }
 
+.imgbox2 {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    flex-direction: column;
+    background-color: #fff;
+    padding: 10px;
+    margin: 10px;
+    border-radius: 0.5em;
+    width: auto;
+    height: auto;
+}
+
 #pictures {
     display: grid;
     grid-template-columns: auto auto;
     grid-row: auto auto;
     grid-column-gap: 15px;
     grid-row-gap: 15px;
+}
+
+.delete {
+    border: none;
+    border-radius: 0.5em;
+    height: 40px;
+    width: 100%;
+    background-color: #b80000;
+    color: #ffffff;
+    margin-top: 10px;
+    text-align: center;
+    line-height: 40px;
+    font-weight: 700;
+    font-size: 20px;
+    text-decoration: none;
+}
+
+.delete:hover {
+    cursor: pointer;
+}
+
+.imgform {
+    width: 300px;
+}
+.send {
+    border: none;
+    border-radius: 0.5em;
+    background-color: #2970c2;
+    color: #ffffff;
+    text-align: center;
+    line-height: 30px;
+    font-weight: 700;
+    font-size: 16px;
+    text-decoration: none;
+    width: 100px;
+    height: 30px;
+    margin: 0px 100px;
+    transition: transform 0.2s;
+}
+
+.send:hover {
+    cursor: pointer;
+    transform: scale(1.05);
 }

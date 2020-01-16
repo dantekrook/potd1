@@ -71,7 +71,28 @@ app.post("/loginuser", function(req, res) {
                     res.render("admin", { url: url });
                 } else {
                     console.log("Vanlig användare");
-                    res.render("upload", { url: url });
+                    let today = new Date();
+                    today.setDate(today.getDate());
+                    today = today
+                        .toISOString()
+                        .slice(0, 10)
+                        .replace(/-/g, "");
+                    var sql = `SELECT id, url, COUNT(*) AS antal FROM picture WHERE userid="${sess.userid}" AND datum="${today}"`;
+                    db.get(sql, function(err, row) {
+                        if (err) {
+                            res.status(400).json({ error: err.message });
+                            return;
+                        }
+                        if (row.antal) {
+                            console.log("Har laddat upp bild idag");
+                            let picurl =
+                                "http://localhost:8000/upload/" + row.url;
+                            res.render("haspic", { url: url, picurl: picurl });
+                        } else {
+                            console.log("Har inte laddat upp bild idag");
+                            res.render("upload", { url: url });
+                        }
+                    });
                 }
             });
         }
@@ -112,11 +133,6 @@ app.post("/signup", function(req, res) {
     });
 });
 
-// function getFileName(file) {
-//   var arr = file.split(".");
-//   return "." + arr[1];
-// }
-
 app.post("/upload", upload.single("image"), (req, res, next) => {
     const file = req.file;
     if (!file) {
@@ -141,54 +157,6 @@ app.get("/active", (req, res, next) => {
         });
     });
 });
-
-/*app.post("/upload", function (req, res) {
-  sess = req.session;
-  if (sess.email) {
-    if (!req.files || Object.keys(req.files).length === 0) {
-      return res.status(400).send("No files were uploaded.");
-    }
-    let currentTime = new Date();
-    currentTime = currentTime
-      .toISOString()
-      .slice(0, 10)
-      .replace(/-/g, "");
-    let sampleFile = req.files.image;
-
-    let uploadPath = __dirname + "/public/upload/" + sampleFile.name;
-    sampleFile.mv(uploadPath, function (err) {
-      if (err) {
-        return res.status(500).send(err);
-      }
-      // var lastID;
-      db.run(
-        `INSERT INTO picture(url, datum, active, userid) VALUES("${sampleFile.name}", "${currentTime}", 0, ${sess.userid})`,
-        function (err) {
-          if (err) {
-            return console.log(err.message);
-          }
-          lastID = this.lastID;
-          var idfile = lastID + getFileName(sampleFile.name);
-          db.run(
-            `UPDATE picture SET url = "${idfile}" WHERE id = "${lastID}"`,
-            function (err) {
-              fs.rename(
-                uploadPath,
-                __dirname + "/public/upload/" + idfile,
-                function (err) {
-                  if (err) console.log("ERROR: " + err);
-                }
-              );
-            }
-          );
-        }
-      );
-      // res.redirect("/");
-    });
-  } else {
-    // res.render("login", { url: url });
-  }
-});*/
 
 app.post("/sparabild", function(req, res) {
     let x = JSON.parse(req.body.image);
@@ -233,26 +201,19 @@ app.post("/sparabild", function(req, res) {
                 .slice(0, 10)
                 .replace(/-/g, "");
             var sql = `SELECT id, url, COUNT(*) AS uploaded from picture WHERE datum = "${today}" AND userid= "${sess.userid}"`;
-            console.log(sql);
             db.get(sql, function(err, row) {
                 if (err) {
                     res.status(400).json({ error: err.message });
                     return;
                 }
-                console.log("haspic");
-                console.log(sess.userid);
-                console.log(row.uploaded);
                 if (row.uploaded) {
-                    //fråga i databasen ifall användaren har en bild
                     let picurl = "http://localhost:8000/upload/" + row.url;
-                    console.log("Uploaded already!");
+                    console.log("Har redan laddat upp bild");
                     res.render("haspic", { url: url, picurl: picurl });
                 } else {
-                    console.log("Not uploaded!");
+                    console.log("Har inte laddat upp bild");
                     res.render("upload", { url: url });
                 }
-                // res.render("upload", { url: url });
-                // res.json({ message: "ok" })
             });
         }
     );
@@ -280,7 +241,6 @@ app.get("/picture", (req, res, next) => {
 });
 
 app.post("/activate", (req, res, next) => {
-    console.log(req.body.url);
     db.run(`UPDATE picture SET active = 0`, function(err) {
         if (err) console.log("ERROR: " + err);
     }).run(`UPDATE picture SET active = 1 WHERE url = "${req.body.url}"`);
@@ -297,29 +257,80 @@ app.get("/logout", (req, res, next) => {
     });
 });
 
+app.get("/delete", (req, res, next) => {
+    let userId = sess.userid;
+    let today = new Date();
+    today.setDate(today.getDate());
+    today = today
+        .toISOString()
+        .slice(0, 10)
+        .replace(/-/g, "");
+    db.get(
+        `SELECT url AS link FROM picture WHERE userid="${userId}" AND datum="${today}"`,
+        function(err, row) {
+            if (err) {
+                res.status(400).json({ error: err.message });
+                return;
+            }
+            if (row.link) {
+                let uploadPath = __dirname + "/public/upload/" + row.link;
+                fs.unlinkSync(uploadPath);
+            }
+        }
+    );
+    db.run(
+        `DELETE FROM picture WHERE userid="${userId}" AND datum="${today}"`,
+        function(err) {
+            if (err) {
+                return console.log(err.message);
+            }
+            console.log("Bild bortagen");
+            res.render("upload", { url: url });
+        }
+    );
+});
+
 app.get("/page/:page", function(req, res) {
     res.render(req.params.page, { url: url });
 });
 
 app.get("/", function(req, res) {
-    console.log("to picoftheday");
     res.render("picoftheday", { url: url });
 });
 
 app.get("/login", function(req, res) {
-    console.log("Ladda localhost");
     sess = req.session;
     if (sess.email) {
-        console.log("logged in");
+        console.log("Är redan inloggad");
         if (sess.admin) {
-            console.log("is admin");
+            console.log("Är admin");
             res.render("admin", { url: url });
         } else {
-            console.log("is not admin");
-            res.render("upload", { url: url });
+            console.log("Är inte admin");
+            let today = new Date();
+            today.setDate(today.getDate());
+            today = today
+                .toISOString()
+                .slice(0, 10)
+                .replace(/-/g, "");
+            var sql = `SELECT id, url, COUNT(*) AS antal FROM picture WHERE userid="${sess.userid}" AND datum="${today}"`;
+            db.get(sql, function(err, row) {
+                if (err) {
+                    res.status(400).json({ error: err.message });
+                    return;
+                }
+                if (row.antal) {
+                    console.log("Har laddat upp bild idag");
+                    let picurl = "http://localhost:8000/upload/" + row.url;
+                    res.render("haspic", { url: url, picurl: picurl });
+                } else {
+                    console.log("Har inte laddat upp bild idag");
+                    res.render("upload", { url: url });
+                }
+            });
         }
     } else {
-        console.log("not logged in");
+        console.log("Inte inloggad redan");
         res.render("login", { url: url });
     }
 });
