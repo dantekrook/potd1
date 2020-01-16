@@ -10,9 +10,10 @@
 
     <body>
         <div class="center">
-            <h1>ADMIN SIDA</h1>
+            <h1>ADMIN</h1>
+            <h3 id="msg"></h3>
             <div id="pictures"></div>
-            <a class="logout" href="/logout">LOG OUT</a>
+            <a class="logout" href="/logout">LOGGA UT</a>
         </div>
         <script>
             if (performance.navigation.type == 2) {
@@ -41,6 +42,11 @@
                     for (var i = 0; i < data.data.length; i++) {
                         console.log(data.data[i].datum);
                         stringReturn += `<div class="imgbox"><img src="http://localhost:8000/upload/${data.data[i].url}"><p></p><input type="radio" name="active" id="${data.data[i].url}" onChange="turnActive(this.id)"></div>`;
+                    }
+                    if (stringReturn == "") {
+                        stringReturn = "Inga bilder uppladdades igår";
+                        document.getElementById("msg").innerHTML = stringReturn;
+                        return;
                     }
                     document.getElementById(
                         "pictures"
