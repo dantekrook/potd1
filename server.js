@@ -7,6 +7,10 @@ const multer = require("multer");
 var fs = require("fs");
 const session = require("express-session");
 const DBSOURCE = "databas.db";
+var detect = require("detect-file-type");
+var bcrypt = require("bcryptjs");
+const saltRounds = 10;
+
 let db = new sqlite3.Database(DBSOURCE, err => {
     if (err) {
         console.error(err.message);
@@ -48,99 +52,130 @@ app.post("/loginuser", function(req, res) {
     var email = req.body.email;
     email = email.toLowerCase();
     var password = req.body.password;
-    var sql = `SELECT id, COUNT(*) AS logged FROM users WHERE password="${password}" AND email="${email}" AND active="${1}"`;
+    var sql = `SELECT id, password, active, COUNT(*) AS logged FROM users WHERE email="${email}" AND active="${1}"`;
     db.get(sql, function(err, row) {
         if (err) {
             res.status(400).json({ error: err.message });
             return;
         }
         if (row.logged) {
-            console.log("Användaren är aktiv och hittades i databasen");
-            sess = req.session;
-            sess.email = email;
-            sess.userid = row.id;
-            sql = `SELECT id, COUNT(*) AS logged FROM users WHERE password="${password}" AND email="${email}" AND active="${1}" and admin="${1}"`;
-            db.get(sql, function(err, row) {
-                if (err) {
-                    res.status(400).json({ error: err.message });
-                    return;
-                }
-                if (row.logged) {
-                    console.log("Användaren är admin");
-                    sess.admin = 1;
-                    res.render("admin", { url: url });
+            bcrypt.compare(password, row.password, (error, response) => {
+                if (error) {
+                    console.log(error);
                 } else {
-                    console.log("Vanlig användare");
-                    let today = new Date();
-                    today.setDate(today.getDate());
-                    today = today
-                        .toISOString()
-                        .slice(0, 10)
-                        .replace(/-/g, "");
-                    var sql = `SELECT id, url, COUNT(*) AS antal FROM picture WHERE userid="${sess.userid}" AND datum="${today}"`;
-                    db.get(sql, function(err, row) {
-                        if (err) {
-                            res.status(400).json({ error: err.message });
-                            return;
-                        }
-                        if (row.antal) {
-                            console.log("Har laddat upp bild idag");
-                            let picurl =
-                                "http://localhost:8000/upload/" + row.url;
-                            res.render("haspic", { url: url, picurl: picurl });
-                        } else {
-                            console.log("Har inte laddat upp bild idag");
-                            res.render("upload", { url: url });
-                        }
-                    });
+                    console.log("Result is: " + response);
+                    if (response == true) {
+                        console.log(
+                            "Användaren är aktiv och hittades i databasen"
+                        );
+                        sess = req.session;
+                        sess.email = email;
+                        sess.userid = row.id;
+                        sql = `SELECT id, COUNT(*) AS isAdmin FROM users WHERE email="${email}" and admin="${1}"`;
+                        db.get(sql, function(err, row) {
+                            if (err) {
+                                res.status(400).json({ error: err.message });
+                                return;
+                            }
+                            if (row.isAdmin) {
+                                console.log("Användaren är admin");
+                                sess.admin = 1;
+                                res.render("admin", { url: url });
+                            } else {
+                                console.log("Vanlig användare");
+                                let today = new Date();
+                                today.setDate(today.getDate());
+                                today = today
+                                    .toISOString()
+                                    .slice(0, 10)
+                                    .replace(/-/g, "");
+                                var sql = `SELECT id, url, COUNT(*) AS antal FROM picture WHERE userid="${sess.userid}" AND datum="${today}"`;
+                                db.get(sql, function(err, row) {
+                                    if (err) {
+                                        res.status(400).json({
+                                            error: err.message
+                                        });
+                                        return;
+                                    }
+                                    if (row.antal) {
+                                        console.log("Har laddat upp bild idag");
+                                        let picurl =
+                                            "http://localhost:8000/upload/" +
+                                            row.url;
+                                        res.render("haspic", {
+                                            url: url,
+                                            picurl: picurl
+                                        });
+                                    } else {
+                                        console.log(
+                                            "Har inte laddat upp bild idag"
+                                        );
+                                        res.render("upload", { url: url });
+                                    }
+                                });
+                            }
+                        });
+                    } else {
+                        res.render("login", {
+                            url: url,
+                            error: "Felaktigt lösenord"
+                        });
+                    }
                 }
             });
+        } else {
+            if (row.active) {
+                res.render("login", {
+                    url: url,
+                    error: "Email finns inte"
+                });
+            } else {
+                res.render("login", {
+                    url: url,
+                    error: "Du är inte verifierad"
+                });
+            }
         }
     });
 });
 
 app.post("/signup", function(req, res) {
-    var email = req.body.email;
-    email = email.toLowerCase();
-    console.log(email);
-    var password = req.body.password;
-    var sql = `SELECT COUNT(*) AS antal FROM users WHERE email="${email}"`;
-    db.get(sql, function(err, row) {
+    bcrypt.hash(req.body.password, saltRounds, (err, hash2) => {
         if (err) {
-            res.status(400).json({ error: err.message });
-            return;
-        }
-        var userid = 0;
-        if (row.antal) {
-            console.log("Användare finns redan");
+            console.log(err);
         } else {
-            console.log("Lägger till användare");
-            db.run(
-                `INSERT INTO users(email, password, active) VALUES("${email}", "${password}", "${0}")`,
-                function(err) {
-                    if (err) {
-                        return console.log(err.message);
-                    }
-                    console.log(
-                        `A row has been inserted with rowid ${this.lastID}`
-                    );
-                    userid = this.lastID;
-                    if (userid) res.json({ id: userid });
-                    else res.json({ id: 0 });
+            var email = req.body.email;
+            email = email.toLowerCase();
+            var password = hash2;
+            var sql = `SELECT COUNT(*) AS antal FROM users WHERE email="${email}"`;
+            db.get(sql, function(err, row) {
+                if (err) {
+                    res.status(400).json({ error: err.message });
+                    return;
                 }
-            );
+                var userid = 0;
+                if (row.antal) {
+                    console.log("Användare finns redan");
+                } else {
+                    console.log("Lägger till användare");
+                    db.run(
+                        `INSERT INTO users(email, password, active) VALUES("${email}", "${password}", "${0}")`,
+                        function(err) {
+                            if (err) {
+                                return console.log(err.message);
+                            }
+                            console.log(
+                                `A row has been inserted with rowid ${this.lastID}`
+                            );
+                            userid = this.lastID;
+                            if (userid) res.json({ id: userid });
+                            else res.json({ id: 0 });
+                        }
+                    );
+                }
+            });
         }
     });
-});
-
-app.post("/upload", upload.single("image"), (req, res, next) => {
-    const file = req.file;
-    if (!file) {
-        const error = new Error("Please upload a file");
-        error.httpStatusCode = 400;
-        return next(error);
-    }
-    res.send(file);
 });
 
 app.get("/active", (req, res, next) => {
@@ -158,65 +193,72 @@ app.get("/active", (req, res, next) => {
     });
 });
 
-app.post("/sparabild", function(req, res) {
-    let x = JSON.parse(req.body.image);
-    console.log(req.body);
-    console.log(x.mimetype);
-    console.log(x.filename);
-    console.log(req.body.bildtext);
-
-    let currentTime = new Date();
-    currentTime = currentTime
-        .toISOString()
-        .slice(0, 10)
-        .replace(/-/g, "");
-
-    let filename = "";
-    if (x.mimetype == "image/jpeg") {
-        filename += x.filename + ".jpg";
-    } else if (x.mimetype == "image/png") {
-        filename += x.filename + ".png";
+app.post("/upload", upload.single("image"), (req, res, next) => {
+    const file = req.file;
+    if (!file) {
+        const error = new Error("Please upload a file");
+        error.httpStatusCode = 400;
+        return next(error);
     }
-    let uploadPath = __dirname + "/public/upload/" + x.filename;
+    res.send(file.filename);
+});
 
-    db.run(
-        `INSERT INTO picture(url, datum, active, userid) VALUES("${filename}", "${currentTime}", 0, ${sess.userid})`,
-        function(err) {
-            if (err) {
-                return console.log(err.message);
-            }
-            console.log("nytt filnamn" + filename);
-            fs.rename(
-                uploadPath,
-                __dirname + "/public/upload/" + filename,
-                function(err) {
-                    if (err) console.log("ERROR: " + err);
-                }
-            );
-
-            let today = new Date();
-            today.setDate(today.getDate());
-            today = today
-                .toISOString()
-                .slice(0, 10)
-                .replace(/-/g, "");
-            var sql = `SELECT id, url, COUNT(*) AS uploaded from picture WHERE datum = "${today}" AND userid= "${sess.userid}"`;
-            db.get(sql, function(err, row) {
-                if (err) {
-                    res.status(400).json({ error: err.message });
-                    return;
-                }
-                if (row.uploaded) {
-                    let picurl = "http://localhost:8000/upload/" + row.url;
-                    console.log("Har redan laddat upp bild");
-                    res.render("haspic", { url: url, picurl: picurl });
-                } else {
-                    console.log("Har inte laddat upp bild");
-                    res.render("upload", { url: url });
-                }
-            });
+app.post("/sparabild", function(req, res) {
+    console.log("bild id: " + req.body.image);
+    let filename = "";
+    detect.fromFile(__dirname + "/public/upload/" + req.body.image, function(
+        err,
+        result
+    ) {
+        if (err) {
+            return console.log(err);
         }
-    );
+        if (result.mime == "image/jpeg") {
+            filename = req.body.image + ".jpg";
+        } else if (result.mime == "image/png") {
+            filename = req.body.image + ".png";
+        }
+
+        let today = new Date();
+        today = today
+            .toISOString()
+            .slice(0, 10)
+            .replace(/-/g, "");
+
+        let uploadPath = __dirname + "/public/upload/" + req.body.image;
+
+        db.run(
+            `INSERT INTO picture(url, datum, active, userid) VALUES("${filename}", "${today}", 0, ${sess.userid})`,
+            function(err) {
+                if (err) {
+                    return console.log(err.message);
+                }
+                console.log("nytt filnamn" + filename);
+                fs.rename(
+                    uploadPath,
+                    __dirname + "/public/upload/" + filename,
+                    function(err) {
+                        if (err) console.log("ERROR: " + err);
+                    }
+                );
+                var sql = `SELECT id, url, COUNT(*) AS uploaded from picture WHERE datum = "${today}" AND userid= "${sess.userid}"`;
+                db.get(sql, function(err, row) {
+                    if (err) {
+                        res.status(400).json({ error: err.message });
+                        return;
+                    }
+                    if (row.uploaded) {
+                        let picurl = "http://localhost:8000/upload/" + row.url;
+                        console.log("Har redan laddat upp bild");
+                        res.render("haspic", { url: url, picurl: picurl });
+                    } else {
+                        console.log("Har inte laddat upp bild");
+                        res.render("upload", { url: url });
+                    }
+                });
+            }
+        );
+    });
 });
 
 app.get("/picture", (req, res, next) => {
@@ -331,7 +373,7 @@ app.get("/login", function(req, res) {
         }
     } else {
         console.log("Inte inloggad redan");
-        res.render("login", { url: url });
+        res.render("login", { url: url, error: "" });
     }
 });
 

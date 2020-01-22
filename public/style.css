@@ -122,7 +122,7 @@ body {
     height: 40px;
     width: 140px;
     background-color: #f1f0ef;
-    color: #292929;
+    color: #424242;
     margin: 25px;
     text-align: center;
     line-height: 40px;
@@ -224,4 +224,10 @@ h3 {
 .send:hover {
     cursor: pointer;
     transform: scale(1.05);
+}
+
+#error,
+#error2 {
+    margin: -10px 0 5px 0;
+    color: red;
 }

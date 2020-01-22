@@ -9,6 +9,7 @@
     <div class="login-page">
         <div class="form">
             <form class="register-form">
+                <div id="error"></div>
                 <input
                     id="email2"
                     type="text"
@@ -26,7 +27,13 @@
                     Redan registrerad? <a href="#">Logga in</a>
                 </p>
             </form>
-            <form class="login-form" method="POST" action="/loginuser">
+            <form
+                id="loginform"
+                class="login-form"
+                method="POST"
+                action="/loginuser"
+            >
+                <div id="error2"><%= error %></div>
                 <input
                     id="email"
                     name="email"
@@ -39,7 +46,7 @@
                     type="password"
                     placeholder="lösenord"
                 />
-                <button type="submit">logga in</button>
+                <button onclick="login()">logga in</button>
                 <p class="message">
                     Inte registrerad? <a href="#">Skapa konto</a>
                 </p>
@@ -72,11 +79,42 @@
         //         }
         //     );
         // }
+        function emailIsValid(email) {
+            return /\S+@\S+\.\S+/.test(email);
+        }
+
+        function login() {
+            event.preventDefault();
+            var email = $("#email").val();
+            if (!emailIsValid(email)) {
+                document.getElementById("error2").innerHTML =
+                    "Ogiltig epost-adress";
+                return;
+            }
+            var password = $("#pass").val();
+            if (password.length < 8) {
+                document.getElementById("error2").innerHTML =
+                    "Lösenord måste vara minst 8 tecken";
+                return;
+            }
+            document.getElementById("loginform").submit();
+        }
+
         function signup() {
             console.log("click");
             event.preventDefault();
             var email = $("#email2").val();
+            if (!emailIsValid(email)) {
+                document.getElementById("error").innerHTML =
+                    "Ogiltig epost-adress";
+                return;
+            }
             var password = $("#pass2").val();
+            if (password.length < 8) {
+                document.getElementById("error").innerHTML =
+                    "Lösenord måste vara minst 8 tecken";
+                return;
+            }
             $.post(
                 "<%= url %>/signup",
                 { email: email, password: password },
