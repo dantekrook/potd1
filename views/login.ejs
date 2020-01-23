@@ -8,18 +8,23 @@
 <body>
     <div class="login-page">
         <div class="form">
-            <form class="register-form">
+            <form
+                class="register-form"
+                id="signupform"
+                method="POST"
+                action="/signup"
+            >
                 <div id="error"></div>
                 <input
                     id="email2"
                     type="text"
-                    name="email"
+                    name="email2"
                     placeholder="e-postadress"
                 />
                 <input
                     id="pass2"
                     type="password"
-                    name="password"
+                    name="password2"
                     placeholder="lösenord"
                 />
                 <button onclick="signup()">registrera</button>
@@ -54,31 +59,10 @@
         </div>
     </div>
     <script>
-        // if (performance.navigation.type == 2) {
-        //     location.reload(true);
-        // }
         $(".message a").click(function() {
             $("form").animate({ height: "toggle", opacity: "toggle" }, "slow");
         });
-        // function login() {
-        //     event.preventDefault();
-        //     var email = $("#email").val();
-        //     var password = $("#pass").val();
-        //     $.post(
-        //         "<%= url %>/loginuser",
-        //         { email: email, password: password },
-        //         function(result) {
-        //             // $("span").html(result);
-        //             if (result.id == 0) {
-        //                 console.log("Login failed!");
-        //             } else {
-        //                 console.log("Success");
-        //                 // SEND UPLOAD PAGE!!
-        //                 window.location.href = "<%= url %>/page/upload";
-        //             }
-        //         }
-        //     );
-        // }
+
         function emailIsValid(email) {
             return /\S+@\S+\.\S+/.test(email);
         }
@@ -101,7 +85,6 @@
         }
 
         function signup() {
-            console.log("click");
             event.preventDefault();
             var email = $("#email2").val();
             if (!emailIsValid(email)) {
@@ -115,20 +98,7 @@
                     "Lösenord måste vara minst 8 tecken";
                 return;
             }
-            $.post(
-                "<%= url %>/signup",
-                { email: email, password: password },
-                function(result) {
-                    console.log("great success");
-                    if (result.id == 0) {
-                        console.log("Login failed!");
-                    } else {
-                        console.log("Success");
-                        // SEND UPLOAD PAGE!!
-                        window.location.href = "<%= url %>/page/upload";
-                    }
-                }
-            );
+            document.getElementById("signupform").submit();
         }
     </script>
 </body>

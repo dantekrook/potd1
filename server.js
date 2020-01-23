@@ -9,7 +9,9 @@ const session = require("express-session");
 const DBSOURCE = "databas.db";
 var detect = require("detect-file-type");
 var bcrypt = require("bcryptjs");
+var nodemailer = require("nodemailer");
 const saltRounds = 10;
+const crypto = require("crypto");
 
 let db = new sqlite3.Database(DBSOURCE, err => {
     if (err) {
@@ -52,7 +54,7 @@ app.post("/loginuser", function(req, res) {
     var email = req.body.email;
     email = email.toLowerCase();
     var password = req.body.password;
-    var sql = `SELECT id, password, active, COUNT(*) AS logged FROM users WHERE email="${email}" AND active="${1}"`;
+    var sql = `SELECT id, password, active, COUNT(*) AS logged FROM users WHERE email="${email}"`;
     db.get(sql, function(err, row) {
         if (err) {
             res.status(400).json({ error: err.message });
@@ -65,56 +67,64 @@ app.post("/loginuser", function(req, res) {
                 } else {
                     console.log("Result is: " + response);
                     if (response == true) {
-                        console.log(
-                            "Användaren är aktiv och hittades i databasen"
-                        );
-                        sess = req.session;
-                        sess.email = email;
-                        sess.userid = row.id;
-                        sql = `SELECT id, COUNT(*) AS isAdmin FROM users WHERE email="${email}" and admin="${1}"`;
-                        db.get(sql, function(err, row) {
-                            if (err) {
-                                res.status(400).json({ error: err.message });
-                                return;
-                            }
-                            if (row.isAdmin) {
-                                console.log("Användaren är admin");
-                                sess.admin = 1;
-                                res.render("admin", { url: url });
-                            } else {
-                                console.log("Vanlig användare");
-                                let today = new Date();
-                                today.setDate(today.getDate());
-                                today = today
-                                    .toISOString()
-                                    .slice(0, 10)
-                                    .replace(/-/g, "");
-                                var sql = `SELECT id, url, COUNT(*) AS antal FROM picture WHERE userid="${sess.userid}" AND datum="${today}"`;
-                                db.get(sql, function(err, row) {
-                                    if (err) {
-                                        res.status(400).json({
-                                            error: err.message
-                                        });
-                                        return;
-                                    }
-                                    if (row.antal) {
-                                        console.log("Har laddat upp bild idag");
-                                        let picurl =
-                                            "http://localhost:8000/upload/" +
-                                            row.url;
-                                        res.render("haspic", {
-                                            url: url,
-                                            picurl: picurl
-                                        });
-                                    } else {
-                                        console.log(
-                                            "Har inte laddat upp bild idag"
-                                        );
-                                        res.render("upload", { url: url });
-                                    }
-                                });
-                            }
-                        });
+                        console.log("Inloggningen lyckades");
+                        if (row.active) {
+                            console.log("Användaren är verifierad");
+                            sess = req.session;
+                            sess.email = email;
+                            sess.userid = row.id;
+                            sql = `SELECT id, COUNT(*) AS isAdmin FROM users WHERE email="${email}" and admin="${1}"`;
+                            db.get(sql, function(err, row) {
+                                if (err) {
+                                    res.status(400).json({
+                                        error: err.message
+                                    });
+                                    return;
+                                }
+                                if (row.isAdmin) {
+                                    console.log("Användaren är admin");
+                                    sess.admin = 1;
+                                    res.render("admin", { url: url });
+                                } else {
+                                    console.log("Vanlig användare");
+                                    let today = new Date();
+                                    today.setDate(today.getDate());
+                                    today = today
+                                        .toISOString()
+                                        .slice(0, 10)
+                                        .replace(/-/g, "");
+                                    var sql = `SELECT id, url, COUNT(*) AS antal FROM picture WHERE userid="${sess.userid}" AND datum="${today}"`;
+                                    db.get(sql, function(err, row) {
+                                        if (err) {
+                                            res.status(400).json({
+                                                error: err.message
+                                            });
+                                            return;
+                                        }
+                                        if (row.antal) {
+                                            console.log(
+                                                "Har laddat upp bild idag"
+                                            );
+                                            let picurl =
+                                                "http://localhost:8000/upload/" +
+                                                row.url;
+                                            res.render("haspic", {
+                                                url: url,
+                                                picurl: picurl
+                                            });
+                                        } else {
+                                            console.log(
+                                                "Har inte laddat upp bild idag"
+                                            );
+                                            res.render("upload", { url: url });
+                                        }
+                                    });
+                                }
+                            });
+                        } else {
+                            console.log("Användare är inte verifierad");
+                            res.render("verify", { url: url });
+                        }
                     } else {
                         res.render("login", {
                             url: url,
@@ -124,29 +134,22 @@ app.post("/loginuser", function(req, res) {
                 }
             });
         } else {
-            if (row.active) {
-                res.render("login", {
-                    url: url,
-                    error: "Email finns inte"
-                });
-            } else {
-                res.render("login", {
-                    url: url,
-                    error: "Du är inte verifierad"
-                });
-            }
+            res.render("login", {
+                url: url,
+                error: "Email finns inte"
+            });
         }
     });
 });
 
 app.post("/signup", function(req, res) {
-    bcrypt.hash(req.body.password, saltRounds, (err, hash2) => {
+    bcrypt.hash(req.body.password2, saltRounds, (err, hash) => {
         if (err) {
             console.log(err);
         } else {
-            var email = req.body.email;
+            var email = req.body.email2;
             email = email.toLowerCase();
-            var password = hash2;
+            var password = hash;
             var sql = `SELECT COUNT(*) AS antal FROM users WHERE email="${email}"`;
             db.get(sql, function(err, row) {
                 if (err) {
@@ -156,10 +159,20 @@ app.post("/signup", function(req, res) {
                 var userid = 0;
                 if (row.antal) {
                     console.log("Användare finns redan");
+                    res.render("login", {
+                        url: url,
+                        error: "E-post finns redan"
+                    });
                 } else {
-                    console.log("Lägger till användare");
+                    console.log(
+                        "Användare finns inte redan, lägger till användare"
+                    );
+                    let hash = crypto
+                        .createHash("md5")
+                        .update(email)
+                        .digest("hex");
                     db.run(
-                        `INSERT INTO users(email, password, active) VALUES("${email}", "${password}", "${0}")`,
+                        `INSERT INTO users(email, password, active, admin, token) VALUES("${email}", "${password}", "${0}", "${0}", "${hash}")`,
                         function(err) {
                             if (err) {
                                 return console.log(err.message);
@@ -168,8 +181,39 @@ app.post("/signup", function(req, res) {
                                 `A row has been inserted with rowid ${this.lastID}`
                             );
                             userid = this.lastID;
-                            if (userid) res.json({ id: userid });
-                            else res.json({ id: 0 });
+                            // GÖR VERIFIERINGEN HÄR
+                            var transporter = nodemailer.createTransport({
+                                service: "gmail",
+                                auth: {
+                                    user: "datanom2019@gmail.com",
+                                    pass: "OptDatD17!"
+                                }
+                            });
+
+                            var mailOptions = {
+                                from: "datanom2019@gmail.com",
+                                to: email,
+                                subject: "Verifikationslänk",
+                                html: `<p>Verifikationslänk för inloggning på PicOfTheDay</p><a href="${url +
+                                    "/verify/" +
+                                    userid +
+                                    "/" +
+                                    hash}">Verifiera dig här</a>`
+                            };
+
+                            transporter.sendMail(mailOptions, function(
+                                error,
+                                info
+                            ) {
+                                if (error) {
+                                    console.log(error);
+                                } else {
+                                    console.log("Email sent: " + info.response);
+                                    res.render("verify", {
+                                        url: url
+                                    });
+                                }
+                            });
                         }
                     );
                 }
@@ -375,6 +419,46 @@ app.get("/login", function(req, res) {
         console.log("Inte inloggad redan");
         res.render("login", { url: url, error: "" });
     }
+});
+
+app.get("/verify/:id/:token", (req, res, next) => {
+    console.log("Trying to verify...", req.params.id, req.params.token);
+    var sql = `SELECT token, active, email, COUNT(*) AS logged FROM users WHERE id="${req.params.id}"`;
+    db.get(sql, function(err, row) {
+        if (err) {
+            res.status(400).json({ error: err.message });
+            return;
+        }
+        if (row.logged) {
+            console.log("User exists");
+            if (!row.active) {
+                console.log("User is not already active");
+                if (req.params.token == row.token) {
+                    console.log("Token is a match");
+                    db.run(
+                        `UPDATE users SET active = 1 where id =${req.params.id}`,
+                        function(err) {
+                            if (err) {
+                                console.log("ERROR: " + err);
+                            } else {
+                                console.log("Activated user!");
+                                sess = req.session;
+                                sess.email = row.email;
+                                sess.userid = row.id;
+                                res.render("upload", { url: url });
+                            }
+                        }
+                    );
+                } else {
+                    console.log("Token is not a match");
+                }
+            } else {
+                console.log("User is already active");
+            }
+        } else {
+            console.log("User does not exist");
+        }
+    });
 });
 
 app.listen(8000, function() {

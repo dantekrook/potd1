@@ -33,15 +33,25 @@
                 action="http://localhost:8000/sparabild"
                 class="imgform"
                 method="POST"
+                id="uploadform"
             >
                 <input name="image" type="file" />
-                <input type="submit" value="SKICKA" class="send" />
+                <input id="send" type="submit" value="SKICKA" class="send" />
             </form>
             <a class="logout" href="/logout">LOGGGA UT</a>
         </div>
         <script>
+            $("#send").hide();
             if (performance.navigation.type == 2) {
                 location.reload(true);
+            }
+
+            function isloadingCheck() {
+                var isloading =
+                    pond.getFiles().filter(x => x.status !== 5).length !== 0;
+                if (!isloading) {
+                    $("#send").show();
+                }
             }
 
             const inputElement = document.querySelector('input[type="file"]');
@@ -54,12 +64,16 @@
                 FilePondPluginImageResize,
                 FilePondPluginFileMetadata
             );
-            const pond = FilePond.create(inputElement);
-
-            FilePond.setOptions({
+            const pond = FilePond.create(inputElement, {
                 server: "<%= url %>/upload",
                 fileMetadataObject: {
                     id: sessionStorage.getItem("user_id")
+                },
+                onaddfilestart: file => {
+                    isloadingCheck();
+                },
+                onprocessfile: files => {
+                    isloadingCheck();
                 },
                 allowImagePreview: true,
                 allowImageCrop: true,
